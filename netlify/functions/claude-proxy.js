@@ -19,7 +19,7 @@ export default async (req, context) => {
 
   const geminiBody = {
     contents: [{ parts: [{ text: body.prompt }] }],
-    generationConfig: { maxOutputTokens: 1500, temperature: 0.7 }
+    generationConfig: { maxOutputTokens: 3000, temperature: 0.7 }
   };
 
   const response = await fetch(geminiUrl, {
