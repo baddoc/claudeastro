@@ -17,12 +17,12 @@
 
     // ⚠️ Remplace ces valeurs par ta config Firebase
     const firebaseConfig = {
-      apiKey: "REMPLACE_PAR_TA_CLE",
-      authDomain: "REMPLACE.firebaseapp.com",
-      projectId: "REMPLACE",
-      storageBucket: "REMPLACE.appspot.com",
-      messagingSenderId: "REMPLACE",
-      appId: "REMPLACE"
+      apiKey: "AIzaSyDzDCK_MOno_UBvYv1ZDsDEdDWjJMc2a-g",
+      authDomain: "auth--firestore.firebaseapp.com",
+      projectId: "auth--firestore",
+      storageBucket: "auth--firestore.firebasestorage.app",
+      messagingSenderId: "209723004281",
+      appId: "1:209723004281:web:0720c726366a81c7b08ba8"
     };
 
     const app = initializeApp(firebaseConfig);
@@ -634,14 +634,17 @@
 
   async function handleAuth() {
     const fb = window._firebase;
-    if (!fb) return;
+    if (!fb) { alert('Firebase non initialisé'); return; }
     if (window._currentUser) {
       await fb.signOut(fb.auth);
       document.getElementById('saved-charts').style.display = 'none';
     } else {
       try {
         await fb.signInWithPopup(fb.auth, fb.googleProvider);
-      } catch (e) { console.error(e); }
+      } catch (e) {
+        console.error('Auth error:', e);
+        alert('Erreur auth: ' + e.code + ' - ' + e.message);
+      }
     }
   }
 
