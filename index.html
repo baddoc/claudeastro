@@ -3,1626 +3,538 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>ClaudeAstro — Astrologie de Précision</title>
+  <title>ClaudeAstro — Thème Natal & Horoscope</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Josefin+Sans:wght@100;300;400&display=swap" rel="stylesheet" />
-  <!-- Firebase -->
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-    import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged }
-      from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-    import { getFirestore, doc, setDoc, getDoc, collection, query, where, getDocs }
-      from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-
-    // ⚠️ Remplace ces valeurs par ta config Firebase
-    const firebaseConfig = {
-      apiKey: "AIzaSyDzDCK_MOno_UBvYv1ZDsDEdDWjJMc2a-g",
-      authDomain: "auth--firestore.firebaseapp.com",
-      projectId: "auth--firestore",
-      storageBucket: "auth--firestore.firebasestorage.app",
-      messagingSenderId: "209723004281",
-      appId: "1:209723004281:web:0720c726366a81c7b08ba8"
-    };
-
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
-    const db = getFirestore(app);
-    const googleProvider = new GoogleAuthProvider();
-
-    window._firebase = { auth, db, googleProvider, signInWithPopup, signOut, onAuthStateChanged, doc, setDoc, getDoc, collection, query, where, getDocs };
-
-    onAuthStateChanged(auth, (user) => {
-      window._currentUser = user;
-      updateAuthUI(user);
-      if (user) loadUserCharts(user.uid);
-    });
-  </script>
-
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Raleway:wght@200;300;400&display=swap" rel="stylesheet" />
   <style>
     :root {
-      --bg: #04040f;
-      --bg2: #080818;
-      --gold: #c9a84c;
-      --gold2: #e8c87a;
-      --silver: #a8b4c8;
-      --white: #f0ede8;
-      --dim: #6a7080;
-      --card: rgba(255,255,255,0.03);
-      --border: rgba(201,168,76,0.2);
-      --radius: 2px;
+      --bg: #060612;
+      --gold: #c8a96e;
+      --gold2: #e2c98a;
+      --white: #f5f2ed;
+      --silver: #9aa0b0;
+      --dim: #555a6a;
+      --border: rgba(200,169,110,0.18);
+      --card: rgba(255,255,255,0.025);
     }
-
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-
-    html { scroll-behavior: smooth; }
-
+    * { margin:0; padding:0; box-sizing:border-box; }
+    html { scroll-behavior:smooth; }
     body {
       background: var(--bg);
       color: var(--white);
-      font-family: 'Josefin Sans', sans-serif;
+      font-family: 'Raleway', sans-serif;
       font-weight: 300;
       min-height: 100vh;
       overflow-x: hidden;
     }
-
-    /* STARFIELD */
-    #starfield {
-      position: fixed; top: 0; left: 0;
-      width: 100%; height: 100%;
-      pointer-events: none;
-      z-index: 0;
-      overflow: hidden;
+    #canvas {
+      position: fixed; top:0; left:0;
+      width:100%; height:100%;
+      pointer-events:none; z-index:0;
     }
-    .star {
-      position: absolute;
-      background: white;
-      border-radius: 50%;
-      animation: twinkle var(--d) ease-in-out infinite alternate;
-    }
-    @keyframes twinkle {
-      from { opacity: var(--a); transform: scale(1); }
-      to   { opacity: calc(var(--a) * 0.2); transform: scale(0.7); }
-    }
-
-    /* HEADER */
     header {
-      position: relative; z-index: 10;
-      padding: 2rem 4rem;
+      position: relative; z-index:10;
+      padding: 1.8rem 4rem;
       display: flex;
       justify-content: space-between;
       align-items: center;
       border-bottom: 1px solid var(--border);
     }
     .logo {
-      font-family: 'Cormorant Garamond', serif;
-      font-size: 1.6rem;
-      font-weight: 300;
-      letter-spacing: 0.3em;
+      font-family: 'Playfair Display', serif;
+      font-size: 1.5rem;
       color: var(--gold);
-      text-transform: uppercase;
+      letter-spacing: 0.1em;
     }
-    .logo span { color: var(--white); }
-    nav { display: flex; gap: 2rem; align-items: center; }
-    nav a {
+    .logo span { color: var(--white); font-style: italic; }
+    .nav-link {
       color: var(--silver);
       text-decoration: none;
-      font-size: 0.75rem;
-      letter-spacing: 0.2em;
+      font-size: 0.72rem;
+      letter-spacing: 0.25em;
       text-transform: uppercase;
-      transition: color 0.3s;
+      border: 1px solid var(--border);
+      padding: 0.5rem 1.2rem;
+      transition: all 0.3s;
     }
-    nav a:hover { color: var(--gold); }
-    #auth-btn {
+    .nav-link:hover { color: var(--gold); border-color: var(--gold); }
+    .hero {
+      position: relative; z-index:5;
+      text-align: center;
+      padding: 4rem 2rem 2rem;
+    }
+    .hero-tag {
+      font-size: 0.65rem;
+      letter-spacing: 0.5em;
+      text-transform: uppercase;
+      color: var(--gold);
+      margin-bottom: 1rem;
+    }
+    .hero h1 {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(2.5rem, 7vw, 5rem);
+      font-weight: 400;
+      line-height: 1.1;
+      color: var(--white);
+      margin-bottom: 1rem;
+    }
+    .hero h1 em { color: var(--gold); font-style: italic; }
+    .hero p {
+      max-width: 520px;
+      margin: 0 auto 1.5rem;
+      color: var(--silver);
+      font-size: 0.88rem;
+      line-height: 1.8;
+    }
+    .zodiac {
+      display: flex; justify-content: center;
+      gap: 1.2rem; flex-wrap: wrap;
+      font-size: 1.3rem; opacity: 0.25;
+      margin-bottom: 2.5rem;
+    }
+    .form-section {
+      position: relative; z-index:5;
+      max-width: 700px;
+      margin: 0 auto;
+      padding: 0 2rem 5rem;
+    }
+    .form-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      padding: 2.5rem;
+    }
+    .form-card h2 {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.5rem;
+      font-weight: 400;
+      color: var(--white);
+      text-align: center;
+      margin-bottom: 0.4rem;
+    }
+    .subtitle {
+      text-align: center;
+      color: var(--dim);
+      font-size: 0.75rem;
+      letter-spacing: 0.06em;
+      margin-bottom: 2rem;
+    }
+    .privacy {
+      background: rgba(200,169,110,0.05);
+      border-left: 2px solid var(--gold);
+      padding: 0.8rem 1.2rem;
+      margin-bottom: 2rem;
+      font-size: 0.7rem;
+      color: var(--silver);
+      line-height: 1.6;
+    }
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.2rem;
+      margin-bottom: 1.2rem;
+    }
+    .form-group { display: flex; flex-direction: column; gap: 0.4rem; }
+    .form-group.full { grid-column: 1 / -1; }
+    label {
+      font-size: 0.62rem;
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
+      color: var(--gold);
+    }
+    input, select {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.08);
+      color: var(--white);
+      padding: 0.75rem 1rem;
+      font-family: 'Raleway', sans-serif;
+      font-size: 0.85rem;
+      outline: none;
+      transition: border-color 0.3s;
+      width: 100%;
+    }
+    input:focus, select:focus { border-color: var(--gold); }
+    select option { background: #0d0d20; }
+    .hint { font-size: 0.62rem; color: var(--dim); }
+    .btn-submit {
+      width: 100%;
+      padding: 1.1rem;
       background: transparent;
       border: 1px solid var(--gold);
       color: var(--gold);
-      padding: 0.5rem 1.2rem;
-      font-family: 'Josefin Sans', sans-serif;
+      font-family: 'Raleway', sans-serif;
+      font-size: 0.75rem;
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: all 0.35s;
+      margin-top: 0.5rem;
+    }
+    .btn-submit:hover:not(:disabled) { background: var(--gold); color: var(--bg); }
+    .btn-submit:disabled { opacity: 0.4; cursor: not-allowed; }
+    #results {
+      position: relative; z-index:5;
+      max-width: 760px;
+      margin: 0 auto;
+      padding: 0 2rem 5rem;
+      display: none;
+    }
+    .result-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      padding: 2.5rem;
+    }
+    .result-card h2 {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.4rem;
+      font-weight: 400;
+      color: var(--gold);
+      margin-bottom: 0.4rem;
+      text-align: center;
+    }
+    .result-meta {
+      text-align: center;
+      font-size: 0.7rem;
+      color: var(--dim);
+      letter-spacing: 0.1em;
+      margin-bottom: 2rem;
+      padding-bottom: 1.5rem;
+      border-bottom: 1px solid var(--border);
+    }
+    #interpretation {
+      font-size: 0.88rem;
+      line-height: 1.9;
+      color: var(--silver);
+    }
+    #interpretation h3 {
+      font-family: 'Playfair Display', serif;
+      color: var(--gold2);
+      font-size: 1rem;
+      font-weight: 400;
+      margin: 1.8rem 0 0.6rem;
+      letter-spacing: 0.05em;
+    }
+    #interpretation p { margin-bottom: 0.6rem; }
+    .loader {
+      text-align: center;
+      padding: 2rem;
+      color: var(--dim);
+      font-size: 0.75rem;
+      letter-spacing: 0.2em;
+    }
+    .spinner {
+      width: 36px; height: 36px;
+      border: 1px solid var(--border);
+      border-top-color: var(--gold);
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin: 0 auto 1rem;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .new-btn {
+      display: block;
+      width: fit-content;
+      margin: 2rem auto 0;
+      padding: 0.7rem 2rem;
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--silver);
+      font-family: 'Raleway', sans-serif;
       font-size: 0.7rem;
       letter-spacing: 0.2em;
       text-transform: uppercase;
       cursor: pointer;
       transition: all 0.3s;
     }
-    #auth-btn:hover { background: var(--gold); color: var(--bg); }
-    #user-info { font-size: 0.7rem; color: var(--dim); letter-spacing: 0.1em; }
-
-    /* HERO */
-    .hero {
-      position: relative; z-index: 5;
-      text-align: center;
-      padding: 6rem 2rem 4rem;
-    }
-    .hero-eyebrow {
-      font-size: 0.7rem;
-      letter-spacing: 0.4em;
-      text-transform: uppercase;
-      color: var(--gold);
-      margin-bottom: 1.5rem;
-    }
-    .hero h1 {
-      font-family: 'Cormorant Garamond', serif;
-      font-size: clamp(3rem, 8vw, 6rem);
-      font-weight: 300;
-      line-height: 1.1;
-      letter-spacing: 0.05em;
-      color: var(--white);
-      margin-bottom: 1.5rem;
-    }
-    .hero h1 em {
-      font-style: italic;
-      color: var(--gold);
-    }
-    .hero p {
-      max-width: 600px;
-      margin: 0 auto 3rem;
-      color: var(--silver);
-      font-size: 0.9rem;
-      line-height: 1.8;
-      letter-spacing: 0.05em;
-    }
-    .zodiac-belt {
-      display: flex;
-      justify-content: center;
-      gap: 1.5rem;
-      flex-wrap: wrap;
-      margin: 2rem 0;
-      opacity: 0.4;
-    }
-    .zodiac-belt span { font-size: 1.4rem; }
-
-    /* METHODS SECTION */
-    .section {
-      position: relative; z-index: 5;
+    .new-btn:hover { border-color: var(--gold); color: var(--gold); }
+    #methodes {
+      position: relative; z-index:5;
       max-width: 1100px;
       margin: 0 auto;
-      padding: 4rem 2rem;
+      padding: 5rem 2rem;
+      border-top: 1px solid var(--border);
     }
-    .section-title {
-      font-family: 'Cormorant Garamond', serif;
-      font-size: 0.65rem;
+    .section-label {
+      font-size: 0.62rem;
       letter-spacing: 0.4em;
       text-transform: uppercase;
       color: var(--gold);
+      text-align: center;
       margin-bottom: 3rem;
-      display: flex;
-      align-items: center;
-      gap: 1rem;
-    }
-    .section-title::after {
-      content: '';
-      flex: 1;
-      height: 1px;
-      background: var(--border);
     }
     .methods-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-      gap: 1.5rem;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 1.2rem;
     }
-    .method-card {
+    .method {
       background: var(--card);
       border: 1px solid var(--border);
-      padding: 2rem;
-      position: relative;
-      overflow: hidden;
+      padding: 1.8rem;
+      border-top: 2px solid var(--gold);
     }
-    .method-card::before {
-      content: '';
-      position: absolute;
-      top: 0; left: 0;
-      width: 3px; height: 100%;
-      background: linear-gradient(to bottom, var(--gold), transparent);
-    }
-    .method-card h3 {
-      font-family: 'Cormorant Garamond', serif;
-      font-size: 1.2rem;
+    .method-icon { font-size: 1.8rem; margin-bottom: 0.8rem; display: block; }
+    .method h3 {
+      font-family: 'Playfair Display', serif;
+      font-size: 1rem;
       font-weight: 400;
       color: var(--gold2);
-      margin-bottom: 0.8rem;
+      margin-bottom: 0.6rem;
     }
-    .method-card p {
-      font-size: 0.8rem;
-      line-height: 1.8;
-      color: var(--silver);
-      letter-spacing: 0.03em;
-    }
-    .method-icon {
-      font-size: 2rem;
-      margin-bottom: 1rem;
-      display: block;
-    }
-
-    /* FORM */
-    .form-section {
-      position: relative; z-index: 5;
-      background: var(--bg2);
-      border-top: 1px solid var(--border);
-      border-bottom: 1px solid var(--border);
-    }
-    .form-container {
-      max-width: 800px;
-      margin: 0 auto;
-      padding: 5rem 2rem;
-    }
-    .form-intro {
-      text-align: center;
-      margin-bottom: 3rem;
-    }
-    .form-intro h2 {
-      font-family: 'Cormorant Garamond', serif;
-      font-size: 2.5rem;
-      font-weight: 300;
-      color: var(--white);
-      margin-bottom: 1rem;
-    }
-    .form-intro p {
-      color: var(--dim);
-      font-size: 0.8rem;
-      letter-spacing: 0.05em;
-      line-height: 1.7;
-    }
-    .privacy-note {
-      background: rgba(201,168,76,0.05);
-      border: 1px solid rgba(201,168,76,0.15);
-      padding: 1rem 1.5rem;
-      margin-bottom: 2.5rem;
-      font-size: 0.75rem;
-      color: var(--gold);
-      letter-spacing: 0.05em;
-      line-height: 1.6;
-    }
-    .privacy-note strong { display: block; margin-bottom: 0.3rem; }
-    .form-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 1.5rem;
-    }
-    .form-group {
-      display: flex;
-      flex-direction: column;
-      gap: 0.5rem;
-    }
-    .form-group.full { grid-column: 1 / -1; }
-    label {
-      font-size: 0.65rem;
-      letter-spacing: 0.3em;
-      text-transform: uppercase;
-      color: var(--gold);
-    }
-    input, select {
-      background: rgba(255,255,255,0.03);
-      border: 1px solid rgba(255,255,255,0.1);
-      color: var(--white);
-      padding: 0.8rem 1rem;
-      font-family: 'Josefin Sans', sans-serif;
-      font-size: 0.85rem;
-      letter-spacing: 0.05em;
-      outline: none;
-      transition: border-color 0.3s;
-      width: 100%;
-    }
-    input:focus, select:focus { border-color: var(--gold); }
-    select option { background: #0d0d1a; color: var(--white); }
-    .form-hint {
-      font-size: 0.65rem;
-      color: var(--dim);
-      letter-spacing: 0.03em;
-    }
-    .submit-btn {
-      width: 100%;
-      padding: 1.2rem;
-      background: transparent;
-      border: 1px solid var(--gold);
-      color: var(--gold);
-      font-family: 'Josefin Sans', sans-serif;
-      font-size: 0.8rem;
-      letter-spacing: 0.3em;
-      text-transform: uppercase;
-      cursor: pointer;
-      transition: all 0.4s;
-      margin-top: 1rem;
-      position: relative;
-      overflow: hidden;
-    }
-    .submit-btn::before {
-      content: '';
-      position: absolute;
-      top: 0; left: -100%;
-      width: 100%; height: 100%;
-      background: var(--gold);
-      transition: left 0.4s;
-      z-index: -1;
-    }
-    .submit-btn:hover { color: var(--bg); }
-    .submit-btn:hover::before { left: 0; }
-    .submit-btn:disabled { opacity: 0.4; cursor: not-allowed; }
-
-    /* RESULTS */
-    #results {
-      position: relative; z-index: 5;
-      max-width: 900px;
-      margin: 0 auto;
-      padding: 4rem 2rem;
-      display: none;
-    }
-    .result-header {
-      text-align: center;
-      margin-bottom: 3rem;
-    }
-    .result-header h2 {
-      font-family: 'Cormorant Garamond', serif;
-      font-size: 2rem;
-      font-weight: 300;
-      color: var(--gold);
-      margin-bottom: 0.5rem;
-    }
-    .chart-summary {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 1rem;
-      margin-bottom: 3rem;
-    }
-    .chart-item {
-      background: var(--card);
-      border: 1px solid var(--border);
-      padding: 1.5rem;
-      text-align: center;
-    }
-    .chart-item .label {
-      font-size: 0.6rem;
-      letter-spacing: 0.3em;
-      text-transform: uppercase;
-      color: var(--dim);
-      margin-bottom: 0.5rem;
-    }
-    .chart-item .value {
-      font-family: 'Cormorant Garamond', serif;
-      font-size: 1.5rem;
-      color: var(--gold2);
-    }
-    .interpretation {
-      background: var(--card);
-      border: 1px solid var(--border);
-      padding: 2.5rem;
-      line-height: 1.9;
-      font-size: 0.9rem;
-      color: var(--silver);
-      letter-spacing: 0.03em;
-      white-space: pre-wrap;
-    }
-    .loading-state {
-      text-align: center;
-      padding: 3rem;
-      color: var(--dim);
-      font-size: 0.8rem;
-      letter-spacing: 0.2em;
-    }
-    .loading-state .spinner {
-      width: 40px; height: 40px;
-      border: 1px solid var(--border);
-      border-top-color: var(--gold);
-      border-radius: 50%;
-      animation: spin 1s linear infinite;
-      margin: 0 auto 1.5rem;
-    }
-    @keyframes spin { to { transform: rotate(360deg); } }
-
-    /* SAVED CHARTS */
-    #saved-charts {
-      position: relative; z-index: 5;
-      max-width: 900px;
-      margin: 0 auto;
-      padding: 2rem;
-      display: none;
-    }
-    .saved-chart-item {
-      background: var(--card);
-      border: 1px solid var(--border);
-      padding: 1.2rem 1.5rem;
-      margin-bottom: 0.8rem;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      cursor: pointer;
-      transition: border-color 0.3s;
-    }
-    .saved-chart-item:hover { border-color: var(--gold); }
-    .saved-chart-item .chart-date {
-      font-size: 0.75rem;
-      color: var(--dim);
-    }
-    .saved-chart-item .chart-type {
-      font-size: 0.7rem;
-      letter-spacing: 0.2em;
-      color: var(--gold);
-      text-transform: uppercase;
-    }
-
-    /* FOOTER */
+    .method p { font-size: 0.78rem; line-height: 1.75; color: var(--silver); }
     footer {
-      position: relative; z-index: 5;
+      position: relative; z-index:5;
       border-top: 1px solid var(--border);
-      padding: 2rem 4rem;
+      padding: 1.5rem 4rem;
       text-align: center;
       color: var(--dim);
-      font-size: 0.7rem;
-      letter-spacing: 0.1em;
+      font-size: 0.68rem;
+      letter-spacing: 0.08em;
     }
-
-    @media (max-width: 768px) {
-      header { padding: 1.5rem; flex-direction: column; gap: 1rem; }
+    @media (max-width: 700px) {
+      header { padding: 1.2rem; }
+      .form-card, .result-card { padding: 1.5rem; }
       .form-grid { grid-template-columns: 1fr; }
-      .chart-summary { grid-template-columns: 1fr; }
-      .hero { padding: 4rem 1.5rem 2rem; }
     }
   </style>
 </head>
 <body>
 
-<!-- STARFIELD -->
-<div id="starfield"></div>
+<canvas id="canvas"></canvas>
 
-<!-- HEADER -->
 <header>
   <div class="logo">Claude<span>Astro</span></div>
-  <nav>
-    <a href="#methodes">Méthodes</a>
-    <a href="#theme-natal">Thème Natal</a>
-    <div id="user-info"></div>
-    <button id="auth-btn" onclick="handleAuth()">Connexion</button>
-  </nav>
+  <a href="#methodes" class="nav-link">Nos méthodes</a>
 </header>
 
-<!-- HERO -->
 <div class="hero">
-  <p class="hero-eyebrow">✦ Astrologie de Précision ✦</p>
-  <h1>Votre Ciel,<br/><em>Décodé</em></h1>
-  <p>Thème natal complet, transits planétaires, maisons astrologiques, aspects et progressions secondaires — calculés avec rigueur, interprétés par intelligence artificielle.</p>
-  <div class="zodiac-belt">
+  <p class="hero-tag">✦ Astrologie de précision ✦</p>
+  <h1>Votre Ciel<br/><em>Décodé</em></h1>
+  <p>Thème natal, transits, maisons, aspects et progressions — calculés avec rigueur, interprétés par intelligence artificielle.</p>
+  <div class="zodiac">
     <span>♈</span><span>♉</span><span>♊</span><span>♋</span><span>♌</span><span>♍</span>
     <span>♎</span><span>♏</span><span>♐</span><span>♑</span><span>♒</span><span>♓</span>
   </div>
 </div>
 
-<!-- FORMULAIRE -->
-<div class="form-section" id="theme-natal">
-  <div class="form-container">
-    <div class="form-intro">
-      <h2>Calculer votre Thème Natal</h2>
-      <p>Renseignez vos données de naissance avec précision.<br/>L'heure exacte est essentielle pour calculer l'Ascendant et les maisons.</p>
+<div class="form-section">
+  <div class="form-card">
+    <h2>Calculer mon Thème Natal</h2>
+    <p class="subtitle">Renseignez vos données de naissance pour obtenir votre analyse complète</p>
+    <div class="privacy">
+      🔒 <strong>Confidentialité</strong> — Aucun nom n'est collecté ni stocké. Seules vos données astronomiques (date, heure, lieu) sont utilisées pour le calcul et ne sont pas conservées.
     </div>
-
-    <div class="privacy-note">
-      <strong>🔒 Confidentialité & Anonymisation</strong>
-      Vos données sont anonymisées avant tout stockage : aucun nom ni prénom n'est conservé. Seules les données astronomiques (date, heure, coordonnées géographiques) sont enregistrées, liées à un identifiant anonyme. Si vous vous connectez, vous retrouverez vos thèmes. Sans connexion, vos données ne sont pas sauvegardées.
-    </div>
-
-    <form id="natal-form" onsubmit="handleSubmit(event)">
+    <form id="form" onsubmit="handleSubmit(event)">
       <div class="form-grid">
         <div class="form-group">
-          <label for="birth-date">Date de naissance</label>
-          <input type="date" id="birth-date" required />
+          <label for="date">Date de naissance</label>
+          <input type="date" id="date" required />
         </div>
         <div class="form-group">
-          <label for="birth-time">Heure de naissance</label>
-          <input type="time" id="birth-time" required />
-          <span class="form-hint">Heure locale au lieu de naissance</span>
+          <label for="time">Heure de naissance</label>
+          <input type="time" id="time" required />
+          <span class="hint">Heure locale au lieu de naissance</span>
         </div>
         <div class="form-group full">
-          <label for="birth-place">Lieu de naissance</label>
-          <input type="text" id="birth-place" placeholder="Ex: Paris, France" required />
-          <span class="form-hint">Ville et pays suffisent</span>
+          <label for="place">Lieu de naissance</label>
+          <input type="text" id="place" placeholder="Ex : Paris, France" required />
         </div>
         <div class="form-group">
-          <label for="chart-type">Type d'analyse</label>
-          <select id="chart-type">
-            <option value="natal">Thème natal seul</option>
-            <option value="natal+transits">Natal + Transits actuels</option>
-            <option value="natal+progressions">Natal + Progressions</option>
+          <label for="type">Type d'analyse</label>
+          <select id="type">
             <option value="complet">Analyse complète</option>
+            <option value="natal">Thème natal seul</option>
+            <option value="transits">Natal + Transits</option>
+            <option value="progressions">Natal + Progressions</option>
           </select>
         </div>
         <div class="form-group">
-          <label for="house-system">Système de maisons</label>
-          <select id="house-system">
-            <option value="placidus">Placidus (recommandé)</option>
-            <option value="koch">Koch</option>
-            <option value="equal">Maisons égales</option>
-            <option value="whole">Signe entier</option>
+          <label for="houses">Système de maisons</label>
+          <select id="houses">
+            <option value="Placidus">Placidus (recommandé)</option>
+            <option value="Koch">Koch</option>
+            <option value="Maisons égales">Maisons égales</option>
+            <option value="Signe entier">Signe entier</option>
           </select>
         </div>
       </div>
-      <button type="submit" class="submit-btn" id="submit-btn">
-        ✦ Calculer mon thème natal
-      </button>
+      <button type="submit" class="btn-submit" id="btn">✦ Générer mon horoscope</button>
     </form>
   </div>
-  <a href="#theme-natal" style="display:inline-block;margin-top:1rem;padding:1rem 2.5rem;border:1px solid var(--gold);color:var(--gold);font-family:Josefin Sans,sans-serif;font-size:0.8rem;letter-spacing:0.3em;text-transform:uppercase;text-decoration:none;transition:all 0.3s;" onmouseover="this.style.background='var(--gold)';this.style.color='var(--bg)'" onmouseout="this.style.background='transparent';this.style.color='var(--gold)'">✦ Calculer mon thème natal</a>
 </div>
 
-<!-- MÉTHODES -->
-<div class="section" id="methodes">
-  <div class="section-title">Nos méthodes astrologiques</div>
+<div id="results">
+  <div class="result-card">
+    <h2>Votre Analyse Astrologique</h2>
+    <div class="result-meta" id="meta"></div>
+    <div id="interpretation"></div>
+    <button class="new-btn" onclick="resetForm()">↩ Nouvelle analyse</button>
+  </div>
+</div>
+
+<div id="methodes">
+  <p class="section-label">Nos méthodes astrologiques</p>
   <div class="methods-grid">
-    <div class="method-card">
+    <div class="method">
       <span class="method-icon">☉</span>
       <h3>Thème Natal</h3>
-      <p>Carte du ciel au moment exact de votre naissance. Position précise du Soleil, de la Lune et des 8 planètes dans les 12 signes et 12 maisons. Système de maisons Placidus — le plus utilisé par les astrologues professionnels.</p>
+      <p>Carte du ciel au moment exact de votre naissance. Positions précises du Soleil, de la Lune et des planètes dans les 12 signes et 12 maisons. Système Placidus par défaut.</p>
     </div>
-    <div class="method-card">
+    <div class="method">
       <span class="method-icon">♄</span>
       <h3>Transits Planétaires</h3>
-      <p>Comparaison entre la position actuelle des planètes et votre thème natal. Les transits révèlent les cycles d'influence en cours — Jupiter en trigone, Saturne en opposition, les éclipses sur vos axes sensibles.</p>
+      <p>Comparaison entre la position actuelle des planètes et votre thème natal. Révèle les cycles d'influence en cours — Jupiter, Saturne, éclipses sur vos axes sensibles.</p>
     </div>
-    <div class="method-card">
+    <div class="method">
       <span class="method-icon">⊕</span>
       <h3>Maisons Astrologiques</h3>
-      <p>Division du ciel en 12 secteurs de vie : identité, argent, communication, foyer, créativité, santé, relations, transformation, spiritualité, carrière, amis, inconscient. Chaque planète dans une maison colore son expression.</p>
+      <p>Division du ciel en 12 secteurs de vie : identité, argent, communication, foyer, créativité, santé, relations, transformation, carrière, amis, inconscient.</p>
     </div>
-    <div class="method-card">
+    <div class="method">
       <span class="method-icon">△</span>
       <h3>Aspects Planétaires</h3>
-      <p>Angles significatifs entre planètes : conjonction (0°), sextile (60°), carré (90°), trigone (120°), opposition (180°). Chaque aspect crée une dynamique spécifique d'harmonie, de tension ou de transformation.</p>
+      <p>Angles significatifs entre planètes : conjonction (0°), sextile (60°), carré (90°), trigone (120°), opposition (180°). Chaque aspect crée une dynamique spécifique.</p>
     </div>
-    <div class="method-card">
+    <div class="method">
       <span class="method-icon">↻</span>
       <h3>Progressions Secondaires</h3>
-      <p>Méthode évolutive : 1 jour après la naissance = 1 année de vie. Les progressions montrent l'évolution intérieure de la personnalité sur le long terme — comment votre thème natal "grandit" avec vous.</p>
+      <p>1 jour après la naissance = 1 année de vie. Les progressions montrent l'évolution intérieure de la personnalité sur le long terme.</p>
     </div>
-    <div class="method-card">
+    <div class="method">
       <span class="method-icon">☊</span>
-      <h3>Nœuds Lunaires & Astéroïdes</h3>
-      <p>Nœud Nord et Sud (karma et mission de vie), Chiron (blessure et guérison), Lilith (ombre et puissance), Vertex (rencontres de destin). Ces points sensibles enrichissent considérablement l'analyse.</p>
+      <h3>Nœuds & Chiron</h3>
+      <p>Nœud Nord (mission de vie), Nœud Sud (karma passé), Chiron (blessure et guérison), Lilith (ombre et puissance). Ces points enrichissent considérablement l'analyse.</p>
     </div>
   </div>
 </div>
 
-<!-- THÈMES SAUVEGARDÉS -->
-<div id="saved-charts">
-  <div class="section-title" style="max-width:900px;margin:0 auto;">Vos thèmes sauvegardés</div>
-  <div id="charts-list"></div>
-</div>
-
-<!-- RÉSULTATS -->
-<div id="results">
-  <div class="result-header">
-    <h2 id="result-title">Votre Thème Natal</h2>
-    <p style="color:var(--dim);font-size:0.75rem;letter-spacing:0.1em;" id="result-subtitle"></p>
-  </div>
-  <div class="chart-summary" id="chart-summary"></div>
-  <div class="interpretation" id="interpretation-text"></div>
-</div>
-
-<!-- FOOTER -->
 <footer>
-  <p>ClaudeAstro — Astrologie de précision, interprétée par IA · Les résultats sont fournis à titre indicatif et culturel uniquement.</p>
+  ClaudeAstro — Astrologie de précision, interprétée par IA · Les résultats sont fournis à titre indicatif et culturel uniquement.
 </footer>
 
 <script>
-  // ─── STARFIELD ───────────────────────────────────────────
-  (function () {
-    const sf = document.getElementById('starfield');
-    for (let i = 0; i < 200; i++) {
-      const s = document.createElement('div');
-      s.className = 'star';
-      const size = Math.random() * 2.5 + 0.3;
-      const alpha = Math.random() * 0.7 + 0.1;
-      s.style.cssText = `
-        width:${size}px; height:${size}px;
-        top:${Math.random() * 100}%; left:${Math.random() * 100}%;
-        --d:${(Math.random() * 4 + 2).toFixed(1)}s;
-        --a:${alpha.toFixed(2)};
-        animation-delay:${(Math.random() * 5).toFixed(1)}s;
-      `;
-      sf.appendChild(s);
-    }
-  })();
-
-  // ─── AUTH ─────────────────────────────────────────────────
-  function updateAuthUI(user) {
-    const btn = document.getElementById('auth-btn');
-    const info = document.getElementById('user-info');
-    if (user) {
-      btn.textContent = 'Déconnexion';
-      info.textContent = user.email || user.displayName || 'Connecté';
-    } else {
-      btn.textContent = 'Connexion Google';
-      info.textContent = '';
-    }
-  }
-
-  async function handleAuth() {
-    const fb = window._firebase;
-    if (!fb) return;
-    if (window._currentUser) {
-      await fb.signOut(fb.auth);
-      document.getElementById('saved-charts').style.display = 'none';
-    } else {
-      try {
-        await fb.signInWithPopup(fb.auth, fb.googleProvider);
-      } catch (e) {
-        console.error('Auth error:', e);
-      }
-    }
-  }
-
-  async function loadUserCharts(uid) {
-    const fb = window._firebase;
-    if (!fb) return;
-    try {
-      const q = fb.query(fb.collection(fb.db, 'charts'), fb.where('uid', '==', uid));
-      const snap = await fb.getDocs(q);
-      const charts = [];
-      snap.forEach(d => charts.push({ id: d.id, ...d.data() }));
-      if (charts.length === 0) return;
-      const container = document.getElementById('saved-charts');
-      const list = document.getElementById('charts-list');
-      list.innerHTML = '';
-      charts.forEach(c => {
-        const el = document.createElement('div');
-        el.className = 'saved-chart-item';
-        el.innerHTML = `
-          <div>
-            <div class="chart-date">${c.birthDate} · ${c.birthTime} · ${c.birthPlace}</div>
-          </div>
-          <div class="chart-type">${c.chartType || 'natal'}</div>
-        `;
-        el.onclick = () => displaySavedChart(c);
-        list.appendChild(el);
+// STARFIELD
+(function() {
+  const canvas = document.getElementById('canvas');
+  const ctx = canvas.getContext('2d');
+  let stars = [];
+  function resize() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
+  function init() {
+    stars = [];
+    for (let i = 0; i < 220; i++) {
+      stars.push({
+        x: Math.random() * canvas.width,
+        y: Math.random() * canvas.height,
+        r: Math.random() * 1.2 + 0.2,
+        a: Math.random() * 0.6 + 0.1,
+        da: (Math.random() * 0.003 + 0.001) * (Math.random() > 0.5 ? 1 : -1),
+        min: 0.05, max: Math.random() * 0.6 + 0.1
       });
-      container.style.display = 'block';
-    } catch (e) { console.error(e); }
-  }
-
-  function displaySavedChart(c) {
-    document.getElementById('result-title').textContent = 'Thème Natal Sauvegardé';
-    document.getElementById('result-subtitle').textContent = `${c.birthDate} · ${c.birthTime} · ${c.birthPlace}`;
-    document.getElementById('interpretation-text').textContent = c.interpretation || '';
-    document.getElementById('results').style.display = 'block';
-    document.getElementById('results').scrollIntoView({ behavior: 'smooth' });
-  }
-
-  // ─── FORM SUBMIT ──────────────────────────────────────────
-  async function handleSubmit(e) {
-    e.preventDefault();
-    const btn = document.getElementById('submit-btn');
-    btn.disabled = true;
-    btn.textContent = '⟳ Calcul en cours…';
-
-    const birthDate  = document.getElementById('birth-date').value;
-    const birthTime  = document.getElementById('birth-time').value;
-    const birthPlace = document.getElementById('birth-place').value;
-    const chartType  = document.getElementById('chart-type').value;
-    const houseSystem = document.getElementById('house-system').value;
-
-    // Affiche la zone résultats avec un loader
-    const resultsEl = document.getElementById('results');
-    const interpEl  = document.getElementById('interpretation-text');
-    resultsEl.style.display = 'block';
-    interpEl.innerHTML = `<div class="loading-state"><div class="spinner"></div>Calcul des positions planétaires et génération de l'interprétation…</div>`;
-    resultsEl.scrollIntoView({ behavior: 'smooth' });
-
-    // Résumé visible
-    document.getElementById('result-title').textContent = 'Votre Thème Natal';
-    document.getElementById('result-subtitle').textContent = `${birthDate} · ${birthTime} · ${birthPlace}`;
-    buildChartSummary(birthDate, birthTime, birthPlace);
-
-    // Appel API Gemini via proxy sécurisé
-    try {
-      const prompt = buildPrompt(birthDate, birthTime, birthPlace, chartType, houseSystem);
-      const res = await fetch('/api/claude', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prompt })
-      });
-      const data = await res.json();
-      const text = data?.text || 'Erreur lors de la génération.';
-      interpEl.textContent = text;
-
-      // Sauvegarde si connecté
-      const fb = window._firebase;
-      if (fb && window._currentUser) {
-        const uid = window._currentUser.uid;
-        const docId = uid + '_' + Date.now();
-        // Anonymisation : on ne stocke PAS le nom, uniquement données astronomiques
-        await fb.setDoc(fb.doc(fb.db, 'charts', docId), {
-          uid,
-          birthDate,
-          birthTime,
-          birthPlace,
-          chartType,
-          houseSystem,
-          interpretation: text,
-          createdAt: new Date().toISOString()
-        });
-        await loadUserCharts(uid);
-      }
-    } catch (err) {
-      interpEl.textContent = 'Une erreur est survenue. Vérifiez votre connexion et réessayez.';
-      console.error(err);
     }
-
-    btn.disabled = false;
-    btn.textContent = '✦ Calculer mon thème natal';
   }
+  function draw() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    stars.forEach(s => {
+      s.a += s.da;
+      if (s.a > s.max || s.a < s.min) s.da *= -1;
+      ctx.beginPath();
+      ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(255,255,255,${s.a})`;
+      ctx.fill();
+    });
+    requestAnimationFrame(draw);
+  }
+  window.addEventListener('resize', () => { resize(); init(); });
+  resize(); init(); draw();
+})();
 
-  // ─── PROMPT BUILDER ──────────────────────────────────────
-  function buildPrompt(date, time, place, type, houses) {
+// FORM
+async function handleSubmit(e) {
+  e.preventDefault();
+  const btn = document.getElementById('btn');
+  btn.disabled = true;
+  btn.textContent = '⟳ Calcul en cours…';
+
+  const date   = document.getElementById('date').value;
+  const time   = document.getElementById('time').value;
+  const place  = document.getElementById('place').value;
+  const type   = document.getElementById('type').value;
+  const houses = document.getElementById('houses').value;
+
+  const resultsEl = document.getElementById('results');
+  const interpEl  = document.getElementById('interpretation');
+  const metaEl    = document.getElementById('meta');
+
+  metaEl.textContent = `${date} · ${time} · ${place}`;
+  interpEl.innerHTML = `<div class="loader"><div class="spinner"></div>Calcul des positions planétaires…</div>`;
+  resultsEl.style.display = 'block';
+  resultsEl.scrollIntoView({ behavior: 'smooth' });
+
+  try {
     const today = new Date();
     const todayStr = today.toISOString().split('T')[0];
     const tomorrow = new Date(today);
     tomorrow.setDate(tomorrow.getDate() + 1);
-    const tomorrowStr = tomorrow.toISOString().split('T')[0];
-    const today = new Date();
-    const todayStr = today.toISOString().split('T')[0];
-    const tomorrow = new Date(today);
-    tomorrow.setDate(tomorrow.getDate() + 1);
-    const tomorrowStr = tomorrow.toLocaleDateString('fr-FR', {weekday:'long', day:'numeric', month:'long'});
-    return `Tu es astrologue expert. Analyse ce thème natal en français. Sois DENSE et CONCIS — chaque phrase doit apporter de l'information concrète. Interdiction de remplissage ou de formules creuses.
+    const tomorrowStr = tomorrow.toLocaleDateString('fr-FR', { weekday:'long', day:'numeric', month:'long' });
+
+    const prompt = `Tu es astrologue expert. Analyse ce thème natal en français. Sois DENSE et CONCIS — chaque phrase doit apporter une information concrète. Pas de formules creuses.
 
 DONNÉES : Naissance le ${date} à ${time} à ${place}. Système ${houses}. Analyse : ${type}. Aujourd'hui : ${todayStr}.
 
-STRUCTURE OBLIGATOIRE — complète chaque section, ne t'arrête pas avant la section 6 :
+STRUCTURE OBLIGATOIRE en 7 sections. Si tu manques d'espace, compresse — mais TERMINE TOUJOURS la section 7 :
 
-## 1. SOLEIL / LUNE / ASCENDANT
-Calcule le signe solaire, lunaire et l'ascendant pour ${date} ${time} ${place}. Pour chaque astre : signe, maison probable, signification concrète dans le caractère. 3-4 phrases par astre.
+## 1. PORTRAIT — Soleil / Lune / Ascendant
+Calcule signe solaire, lunaire et ascendant. Pour chaque : signe, maison probable, expression concrète dans le caractère. 3 phrases par astre.
 
 ## 2. PLANÈTES PERSONNELLES
-Mercure (mode de pensée/communication), Vénus (amour/argent/valeurs), Mars (énergie/désir/action) : signe et maison probable, expression concrète. 2-3 phrases chacune.
+Mercure, Vénus, Mars : signe, maison, manifestation concrète. 2 phrases par planète.
 
 ## 3. ASPECTS MAJEURS
-Liste 4-5 aspects clés du thème (ex: Soleil carré Saturne, Lune trigone Jupiter...). Pour chaque aspect : tension ou harmonie, domaine de vie concerné, comment cela se manifeste. 2 phrases par aspect.
+4 aspects clés. Pour chaque : nom de l'aspect, tension ou harmonie, domaine de vie, comment cela se manifeste. 2 phrases par aspect.
 
 ## 4. NŒUDS & CHIRON
-Nœud Nord (mission de vie) et Nœud Sud (talents passés). Chiron (blessure et guérison). 2 phrases chacun.
+Nœud Nord (mission), Nœud Sud (acquis passés), Chiron (blessure/guérison). 2 phrases chacun.
 
 ## 5. TRANSITS ACTUELS (${todayStr})
-3-4 transits planétaires majeurs actifs aujourd'hui sur ce thème natal. Pour chaque transit : planète en transit, aspect formé, domaine de vie activé, durée approximative. Sois précis.
+3 transits majeurs actifs. Pour chaque : planète, aspect formé, domaine activé, durée. 2 phrases par transit.
 
 ## 6. PRÉVISION POUR DEMAIN (${tomorrowStr})
-- Lune : position et aspects du jour, impact sur l'humeur
-- Matin : ton et opportunités
-- Après-midi : points d'attention
-- Soir : énergie de fin de journée
-- Conseil pratique : une action concrète à faire demain
+Position et aspects de la Lune. Matin / Après-midi / Soir : ton et opportunités. Un conseil pratique concret.
 
 ## 7. SYNTHÈSE
-3-4 phrases maximum : le message central du thème natal, le défi principal, l'opportunité clé du moment.
+Message central du thème natal. Défi principal. Opportunité clé du moment. Maximum 4 phrases.
 
-RÈGLE ABSOLUE : termine TOUJOURS la section 7 avant de t'arrêter. Si tu manques de place, raccourcis les sections précédentes mais complète toujours jusqu'à la section 7. NE MENTIONNE JAMAIS de nom ou prénom.`;
-  }ta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>ClaudeAstro — Astrologie de Précision</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Josefin+Sans:wght@100;300;400&display=swap" rel="stylesheet" />
-  <!-- Firebase -->
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-    import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged }
-      from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-    import { getFirestore, doc, setDoc, getDoc, collection, query, where, getDocs }
-      from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+RÈGLES : Termine TOUJOURS la section 7. NE MENTIONNE JAMAIS de nom ou prénom.`;
 
-    // ⚠️ Remplace ces valeurs par ta config Firebase
-    const firebaseConfig = {
-      apiKey: "AIzaSyDzDCK_MOno_UBvYv1ZDsDEdDWjJMc2a-g",
-      authDomain: "auth--firestore.firebaseapp.com",
-      projectId: "auth--firestore",
-      storageBucket: "auth--firestore.firebasestorage.app",
-      messagingSenderId: "209723004281",
-      appId: "1:209723004281:web:0720c726366a81c7b08ba8"
-    };
-
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
-    const db = getFirestore(app);
-    const googleProvider = new GoogleAuthProvider();
-
-    window._firebase = { auth, db, googleProvider, signInWithPopup, signOut, onAuthStateChanged, doc, setDoc, getDoc, collection, query, where, getDocs };
-
-    onAuthStateChanged(auth, (user) => {
-      window._currentUser = user;
-      updateAuthUI(user);
-      if (user) loadUserCharts(user.uid);
+    const res = await fetch('/api/claude', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ prompt })
     });
-  </script>
+    const data = await res.json();
+    const text = data?.text || 'Erreur lors de la génération.';
 
-  <style>
-    :root {
-      --bg: #04040f;
-      --bg2: #080818;
-      --gold: #c9a84c;
-      --gold2: #e8c87a;
-      --silver: #a8b4c8;
-      --white: #f0ede8;
-      --dim: #6a7080;
-      --card: rgba(255,255,255,0.03);
-      --border: rgba(201,168,76,0.2);
-      --radius: 2px;
-    }
+    // Render markdown headers and paragraphs
+    const html = text
+      .replace(/## (.+)/g, '<h3>$1</h3>')
+      .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+      .split('\n')
+      .map(line => line.trim() ? (line.startsWith('<h3>') ? line : `<p>${line}</p>`) : '')
+      .join('');
+    interpEl.innerHTML = html;
 
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-
-    html { scroll-behavior: smooth; }
-
-    body {
-      background: var(--bg);
-      color: var(--white);
-      font-family: 'Josefin Sans', sans-serif;
-      font-weight: 300;
-      min-height: 100vh;
-      overflow-x: hidden;
-    }
-
-    /* STARFIELD */
-    #starfield {
-      position: fixed; top: 0; left: 0;
-      width: 100%; height: 100%;
-      pointer-events: none;
-      z-index: 0;
-      overflow: hidden;
-    }
-    .star {
-      position: absolute;
-      background: white;
-      border-radius: 50%;
-      animation: twinkle var(--d) ease-in-out infinite alternate;
-    }
-    @keyframes twinkle {
-      from { opacity: var(--a); transform: scale(1); }
-      to   { opacity: calc(var(--a) * 0.2); transform: scale(0.7); }
-    }
-
-    /* HEADER */
-    header {
-      position: relative; z-index: 10;
-      padding: 2rem 4rem;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      border-bottom: 1px solid var(--border);
-    }
-    .logo {
-      font-family: 'Cormorant Garamond', serif;
-      font-size: 1.6rem;
-      font-weight: 300;
-      letter-spacing: 0.3em;
-      color: var(--gold);
-      text-transform: uppercase;
-    }
-    .logo span { color: var(--white); }
-    nav { display: flex; gap: 2rem; align-items: center; }
-    nav a {
-      color: var(--silver);
-      text-decoration: none;
-      font-size: 0.75rem;
-      letter-spacing: 0.2em;
-      text-transform: uppercase;
-      transition: color 0.3s;
-    }
-    nav a:hover { color: var(--gold); }
-    #auth-btn {
-      background: transparent;
-      border: 1px solid var(--gold);
-      color: var(--gold);
-      padding: 0.5rem 1.2rem;
-      font-family: 'Josefin Sans', sans-serif;
-      font-size: 0.7rem;
-      letter-spacing: 0.2em;
-      text-transform: uppercase;
-      cursor: pointer;
-      transition: all 0.3s;
-    }
-    #auth-btn:hover { background: var(--gold); color: var(--bg); }
-    #user-info { font-size: 0.7rem; color: var(--dim); letter-spacing: 0.1em; }
-
-    /* HERO */
-    .hero {
-      position: relative; z-index: 5;
-      text-align: center;
-      padding: 6rem 2rem 4rem;
-    }
-    .hero-eyebrow {
-      font-size: 0.7rem;
-      letter-spacing: 0.4em;
-      text-transform: uppercase;
-      color: var(--gold);
-      margin-bottom: 1.5rem;
-    }
-    .hero h1 {
-      font-family: 'Cormorant Garamond', serif;
-      font-size: clamp(3rem, 8vw, 6rem);
-      font-weight: 300;
-      line-height: 1.1;
-      letter-spacing: 0.05em;
-      color: var(--white);
-      margin-bottom: 1.5rem;
-    }
-    .hero h1 em {
-      font-style: italic;
-      color: var(--gold);
-    }
-    .hero p {
-      max-width: 600px;
-      margin: 0 auto 3rem;
-      color: var(--silver);
-      font-size: 0.9rem;
-      line-height: 1.8;
-      letter-spacing: 0.05em;
-    }
-    .zodiac-belt {
-      display: flex;
-      justify-content: center;
-      gap: 1.5rem;
-      flex-wrap: wrap;
-      margin: 2rem 0;
-      opacity: 0.4;
-    }
-    .zodiac-belt span { font-size: 1.4rem; }
-
-    /* METHODS SECTION */
-    .section {
-      position: relative; z-index: 5;
-      max-width: 1100px;
-      margin: 0 auto;
-      padding: 4rem 2rem;
-    }
-    .section-title {
-      font-family: 'Cormorant Garamond', serif;
-      font-size: 0.65rem;
-      letter-spacing: 0.4em;
-      text-transform: uppercase;
-      color: var(--gold);
-      margin-bottom: 3rem;
-      display: flex;
-      align-items: center;
-      gap: 1rem;
-    }
-    .section-title::after {
-      content: '';
-      flex: 1;
-      height: 1px;
-      background: var(--border);
-    }
-    .methods-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-      gap: 1.5rem;
-    }
-    .method-card {
-      background: var(--card);
-      border: 1px solid var(--border);
-      padding: 2rem;
-      position: relative;
-      overflow: hidden;
-    }
-    .method-card::before {
-      content: '';
-      position: absolute;
-      top: 0; left: 0;
-      width: 3px; height: 100%;
-      background: linear-gradient(to bottom, var(--gold), transparent);
-    }
-    .method-card h3 {
-      font-family: 'Cormorant Garamond', serif;
-      font-size: 1.2rem;
-      font-weight: 400;
-      color: var(--gold2);
-      margin-bottom: 0.8rem;
-    }
-    .method-card p {
-      font-size: 0.8rem;
-      line-height: 1.8;
-      color: var(--silver);
-      letter-spacing: 0.03em;
-    }
-    .method-icon {
-      font-size: 2rem;
-      margin-bottom: 1rem;
-      display: block;
-    }
-
-    /* FORM */
-    .form-section {
-      position: relative; z-index: 5;
-      background: var(--bg2);
-      border-top: 1px solid var(--border);
-      border-bottom: 1px solid var(--border);
-    }
-    .form-container {
-      max-width: 800px;
-      margin: 0 auto;
-      padding: 5rem 2rem;
-    }
-    .form-intro {
-      text-align: center;
-      margin-bottom: 3rem;
-    }
-    .form-intro h2 {
-      font-family: 'Cormorant Garamond', serif;
-      font-size: 2.5rem;
-      font-weight: 300;
-      color: var(--white);
-      margin-bottom: 1rem;
-    }
-    .form-intro p {
-      color: var(--dim);
-      font-size: 0.8rem;
-      letter-spacing: 0.05em;
-      line-height: 1.7;
-    }
-    .privacy-note {
-      background: rgba(201,168,76,0.05);
-      border: 1px solid rgba(201,168,76,0.15);
-      padding: 1rem 1.5rem;
-      margin-bottom: 2.5rem;
-      font-size: 0.75rem;
-      color: var(--gold);
-      letter-spacing: 0.05em;
-      line-height: 1.6;
-    }
-    .privacy-note strong { display: block; margin-bottom: 0.3rem; }
-    .form-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 1.5rem;
-    }
-    .form-group {
-      display: flex;
-      flex-direction: column;
-      gap: 0.5rem;
-    }
-    .form-group.full { grid-column: 1 / -1; }
-    label {
-      font-size: 0.65rem;
-      letter-spacing: 0.3em;
-      text-transform: uppercase;
-      color: var(--gold);
-    }
-    input, select {
-      background: rgba(255,255,255,0.03);
-      border: 1px solid rgba(255,255,255,0.1);
-      color: var(--white);
-      padding: 0.8rem 1rem;
-      font-family: 'Josefin Sans', sans-serif;
-      font-size: 0.85rem;
-      letter-spacing: 0.05em;
-      outline: none;
-      transition: border-color 0.3s;
-      width: 100%;
-    }
-    input:focus, select:focus { border-color: var(--gold); }
-    select option { background: #0d0d1a; color: var(--white); }
-    .form-hint {
-      font-size: 0.65rem;
-      color: var(--dim);
-      letter-spacing: 0.03em;
-    }
-    .submit-btn {
-      width: 100%;
-      padding: 1.2rem;
-      background: transparent;
-      border: 1px solid var(--gold);
-      color: var(--gold);
-      font-family: 'Josefin Sans', sans-serif;
-      font-size: 0.8rem;
-      letter-spacing: 0.3em;
-      text-transform: uppercase;
-      cursor: pointer;
-      transition: all 0.4s;
-      margin-top: 1rem;
-      position: relative;
-      overflow: hidden;
-    }
-    .submit-btn::before {
-      content: '';
-      position: absolute;
-      top: 0; left: -100%;
-      width: 100%; height: 100%;
-      background: var(--gold);
-      transition: left 0.4s;
-      z-index: -1;
-    }
-    .submit-btn:hover { color: var(--bg); }
-    .submit-btn:hover::before { left: 0; }
-    .submit-btn:disabled { opacity: 0.4; cursor: not-allowed; }
-
-    /* RESULTS */
-    #results {
-      position: relative; z-index: 5;
-      max-width: 900px;
-      margin: 0 auto;
-      padding: 4rem 2rem;
-      display: none;
-    }
-    .result-header {
-      text-align: center;
-      margin-bottom: 3rem;
-    }
-    .result-header h2 {
-      font-family: 'Cormorant Garamond', serif;
-      font-size: 2rem;
-      font-weight: 300;
-      color: var(--gold);
-      margin-bottom: 0.5rem;
-    }
-    .chart-summary {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 1rem;
-      margin-bottom: 3rem;
-    }
-    .chart-item {
-      background: var(--card);
-      border: 1px solid var(--border);
-      padding: 1.5rem;
-      text-align: center;
-    }
-    .chart-item .label {
-      font-size: 0.6rem;
-      letter-spacing: 0.3em;
-      text-transform: uppercase;
-      color: var(--dim);
-      margin-bottom: 0.5rem;
-    }
-    .chart-item .value {
-      font-family: 'Cormorant Garamond', serif;
-      font-size: 1.5rem;
-      color: var(--gold2);
-    }
-    .interpretation {
-      background: var(--card);
-      border: 1px solid var(--border);
-      padding: 2.5rem;
-      line-height: 1.9;
-      font-size: 0.9rem;
-      color: var(--silver);
-      letter-spacing: 0.03em;
-      white-space: pre-wrap;
-    }
-    .loading-state {
-      text-align: center;
-      padding: 3rem;
-      color: var(--dim);
-      font-size: 0.8rem;
-      letter-spacing: 0.2em;
-    }
-    .loading-state .spinner {
-      width: 40px; height: 40px;
-      border: 1px solid var(--border);
-      border-top-color: var(--gold);
-      border-radius: 50%;
-      animation: spin 1s linear infinite;
-      margin: 0 auto 1.5rem;
-    }
-    @keyframes spin { to { transform: rotate(360deg); } }
-
-    /* SAVED CHARTS */
-    #saved-charts {
-      position: relative; z-index: 5;
-      max-width: 900px;
-      margin: 0 auto;
-      padding: 2rem;
-      display: none;
-    }
-    .saved-chart-item {
-      background: var(--card);
-      border: 1px solid var(--border);
-      padding: 1.2rem 1.5rem;
-      margin-bottom: 0.8rem;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      cursor: pointer;
-      transition: border-color 0.3s;
-    }
-    .saved-chart-item:hover { border-color: var(--gold); }
-    .saved-chart-item .chart-date {
-      font-size: 0.75rem;
-      color: var(--dim);
-    }
-    .saved-chart-item .chart-type {
-      font-size: 0.7rem;
-      letter-spacing: 0.2em;
-      color: var(--gold);
-      text-transform: uppercase;
-    }
-
-    /* FOOTER */
-    footer {
-      position: relative; z-index: 5;
-      border-top: 1px solid var(--border);
-      padding: 2rem 4rem;
-      text-align: center;
-      color: var(--dim);
-      font-size: 0.7rem;
-      letter-spacing: 0.1em;
-    }
-
-    @media (max-width: 768px) {
-      header { padding: 1.5rem; flex-direction: column; gap: 1rem; }
-      .form-grid { grid-template-columns: 1fr; }
-      .chart-summary { grid-template-columns: 1fr; }
-      .hero { padding: 4rem 1.5rem 2rem; }
-    }
-  </style>
-</head>
-<body>
-
-<!-- STARFIELD -->
-<div id="starfield"></div>
-
-<!-- HEADER -->
-<header>
-  <div class="logo">Claude<span>Astro</span></div>
-  <nav>
-    <a href="#methodes">Méthodes</a>
-    <a href="#theme-natal">Thème Natal</a>
-    <div id="user-info"></div>
-    <button id="auth-btn" onclick="handleAuth()">Connexion</button>
-  </nav>
-</header>
-
-<!-- HERO -->
-<div class="hero">
-  <p class="hero-eyebrow">✦ Astrologie de Précision ✦</p>
-  <h1>Votre Ciel,<br/><em>Décodé</em></h1>
-  <p>Thème natal complet, transits planétaires, maisons astrologiques, aspects et progressions secondaires — calculés avec rigueur, interprétés par intelligence artificielle.</p>
-  <div class="zodiac-belt">
-    <span>♈</span><span>♉</span><span>♊</span><span>♋</span><span>♌</span><span>♍</span>
-    <span>♎</span><span>♏</span><span>♐</span><span>♑</span><span>♒</span><span>♓</span>
-  </div>
-</div>
-
-<!-- FORMULAIRE -->
-<div class="form-section" id="theme-natal">
-  <div class="form-container">
-    <div class="form-intro">
-      <h2>Calculer votre Thème Natal</h2>
-      <p>Renseignez vos données de naissance avec précision.<br/>L'heure exacte est essentielle pour calculer l'Ascendant et les maisons.</p>
-    </div>
-
-    <div class="privacy-note">
-      <strong>🔒 Confidentialité & Anonymisation</strong>
-      Vos données sont anonymisées avant tout stockage : aucun nom ni prénom n'est conservé. Seules les données astronomiques (date, heure, coordonnées géographiques) sont enregistrées, liées à un identifiant anonyme. Si vous vous connectez, vous retrouverez vos thèmes. Sans connexion, vos données ne sont pas sauvegardées.
-    </div>
-
-    <form id="natal-form" onsubmit="handleSubmit(event)">
-      <div class="form-grid">
-        <div class="form-group">
-          <label for="birth-date">Date de naissance</label>
-          <input type="date" id="birth-date" required />
-        </div>
-        <div class="form-group">
-          <label for="birth-time">Heure de naissance</label>
-          <input type="time" id="birth-time" required />
-          <span class="form-hint">Heure locale au lieu de naissance</span>
-        </div>
-        <div class="form-group full">
-          <label for="birth-place">Lieu de naissance</label>
-          <input type="text" id="birth-place" placeholder="Ex: Paris, France" required />
-          <span class="form-hint">Ville et pays suffisent</span>
-        </div>
-        <div class="form-group">
-          <label for="chart-type">Type d'analyse</label>
-          <select id="chart-type">
-            <option value="natal">Thème natal seul</option>
-            <option value="natal+transits">Natal + Transits actuels</option>
-            <option value="natal+progressions">Natal + Progressions</option>
-            <option value="complet">Analyse complète</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label for="house-system">Système de maisons</label>
-          <select id="house-system">
-            <option value="placidus">Placidus (recommandé)</option>
-            <option value="koch">Koch</option>
-            <option value="equal">Maisons égales</option>
-            <option value="whole">Signe entier</option>
-          </select>
-        </div>
-      </div>
-      <button type="submit" class="submit-btn" id="submit-btn">
-        ✦ Calculer mon thème natal
-      </button>
-    </form>
-  </div>
-  <a href="#theme-natal" style="display:inline-block;margin-top:1rem;padding:1rem 2.5rem;border:1px solid var(--gold);color:var(--gold);font-family:Josefin Sans,sans-serif;font-size:0.8rem;letter-spacing:0.3em;text-transform:uppercase;text-decoration:none;transition:all 0.3s;" onmouseover="this.style.background='var(--gold)';this.style.color='var(--bg)'" onmouseout="this.style.background='transparent';this.style.color='var(--gold)'">✦ Calculer mon thème natal</a>
-</div>
-
-<!-- MÉTHODES -->
-<div class="section" id="methodes">
-  <div class="section-title">Nos méthodes astrologiques</div>
-  <div class="methods-grid">
-    <div class="method-card">
-      <span class="method-icon">☉</span>
-      <h3>Thème Natal</h3>
-      <p>Carte du ciel au moment exact de votre naissance. Position précise du Soleil, de la Lune et des 8 planètes dans les 12 signes et 12 maisons. Système de maisons Placidus — le plus utilisé par les astrologues professionnels.</p>
-    </div>
-    <div class="method-card">
-      <span class="method-icon">♄</span>
-      <h3>Transits Planétaires</h3>
-      <p>Comparaison entre la position actuelle des planètes et votre thème natal. Les transits révèlent les cycles d'influence en cours — Jupiter en trigone, Saturne en opposition, les éclipses sur vos axes sensibles.</p>
-    </div>
-    <div class="method-card">
-      <span class="method-icon">⊕</span>
-      <h3>Maisons Astrologiques</h3>
-      <p>Division du ciel en 12 secteurs de vie : identité, argent, communication, foyer, créativité, santé, relations, transformation, spiritualité, carrière, amis, inconscient. Chaque planète dans une maison colore son expression.</p>
-    </div>
-    <div class="method-card">
-      <span class="method-icon">△</span>
-      <h3>Aspects Planétaires</h3>
-      <p>Angles significatifs entre planètes : conjonction (0°), sextile (60°), carré (90°), trigone (120°), opposition (180°). Chaque aspect crée une dynamique spécifique d'harmonie, de tension ou de transformation.</p>
-    </div>
-    <div class="method-card">
-      <span class="method-icon">↻</span>
-      <h3>Progressions Secondaires</h3>
-      <p>Méthode évolutive : 1 jour après la naissance = 1 année de vie. Les progressions montrent l'évolution intérieure de la personnalité sur le long terme — comment votre thème natal "grandit" avec vous.</p>
-    </div>
-    <div class="method-card">
-      <span class="method-icon">☊</span>
-      <h3>Nœuds Lunaires & Astéroïdes</h3>
-      <p>Nœud Nord et Sud (karma et mission de vie), Chiron (blessure et guérison), Lilith (ombre et puissance), Vertex (rencontres de destin). Ces points sensibles enrichissent considérablement l'analyse.</p>
-    </div>
-  </div>
-</div>
-
-<!-- THÈMES SAUVEGARDÉS -->
-<div id="saved-charts">
-  <div class="section-title" style="max-width:900px;margin:0 auto;">Vos thèmes sauvegardés</div>
-  <div id="charts-list"></div>
-</div>
-
-<!-- RÉSULTATS -->
-<div id="results">
-  <div class="result-header">
-    <h2 id="result-title">Votre Thème Natal</h2>
-    <p style="color:var(--dim);font-size:0.75rem;letter-spacing:0.1em;" id="result-subtitle"></p>
-  </div>
-  <div class="chart-summary" id="chart-summary"></div>
-  <div class="interpretation" id="interpretation-text"></div>
-</div>
-
-<!-- FOOTER -->
-<footer>
-  <p>ClaudeAstro — Astrologie de précision, interprétée par IA · Les résultats sont fournis à titre indicatif et culturel uniquement.</p>
-</footer>
-
-<script>
-  // ─── STARFIELD ───────────────────────────────────────────
-  (function () {
-    const sf = document.getElementById('starfield');
-    for (let i = 0; i < 200; i++) {
-      const s = document.createElement('div');
-      s.className = 'star';
-      const size = Math.random() * 2.5 + 0.3;
-      const alpha = Math.random() * 0.7 + 0.1;
-      s.style.cssText = `
-        width:${size}px; height:${size}px;
-        top:${Math.random() * 100}%; left:${Math.random() * 100}%;
-        --d:${(Math.random() * 4 + 2).toFixed(1)}s;
-        --a:${alpha.toFixed(2)};
-        animation-delay:${(Math.random() * 5).toFixed(1)}s;
-      `;
-      sf.appendChild(s);
-    }
-  })();
-
-  // ─── AUTH ─────────────────────────────────────────────────
-  function updateAuthUI(user) {
-    const btn = document.getElementById('auth-btn');
-    const info = document.getElementById('user-info');
-    if (user) {
-      btn.textContent = 'Déconnexion';
-      info.textContent = user.email || user.displayName || 'Connecté';
-    } else {
-      btn.textContent = 'Connexion Google';
-      info.textContent = '';
-    }
+  } catch(err) {
+    interpEl.innerHTML = '<p style="color:#c66">Une erreur est survenue. Vérifiez votre connexion.</p>';
+    console.error(err);
   }
 
-  async function handleAuth() {
-    const fb = window._firebase;
-    if (!fb) return;
-    if (window._currentUser) {
-      await fb.signOut(fb.auth);
-      document.getElementById('saved-charts').style.display = 'none';
-    } else {
-      try {
-        await fb.signInWithPopup(fb.auth, fb.googleProvider);
-      } catch (e) {
-        console.error('Auth error:', e);
-      }
-    }
-  }
+  btn.disabled = false;
+  btn.textContent = '✦ Générer mon horoscope';
+}
 
-  async function loadUserCharts(uid) {
-    const fb = window._firebase;
-    if (!fb) return;
-    try {
-      const q = fb.query(fb.collection(fb.db, 'charts'), fb.where('uid', '==', uid));
-      const snap = await fb.getDocs(q);
-      const charts = [];
-      snap.forEach(d => charts.push({ id: d.id, ...d.data() }));
-      if (charts.length === 0) return;
-      const container = document.getElementById('saved-charts');
-      const list = document.getElementById('charts-list');
-      list.innerHTML = '';
-      charts.forEach(c => {
-        const el = document.createElement('div');
-        el.className = 'saved-chart-item';
-        el.innerHTML = `
-          <div>
-            <div class="chart-date">${c.birthDate} · ${c.birthTime} · ${c.birthPlace}</div>
-          </div>
-          <div class="chart-type">${c.chartType || 'natal'}</div>
-        `;
-        el.onclick = () => displaySavedChart(c);
-        list.appendChild(el);
-      });
-      container.style.display = 'block';
-    } catch (e) { console.error(e); }
-  }
-
-  function displaySavedChart(c) {
-    document.getElementById('result-title').textContent = 'Thème Natal Sauvegardé';
-    document.getElementById('result-subtitle').textContent = `${c.birthDate} · ${c.birthTime} · ${c.birthPlace}`;
-    document.getElementById('interpretation-text').textContent = c.interpretation || '';
-    document.getElementById('results').style.display = 'block';
-    document.getElementById('results').scrollIntoView({ behavior: 'smooth' });
-  }
-
-  // ─── FORM SUBMIT ──────────────────────────────────────────
-  async function handleSubmit(e) {
-    e.preventDefault();
-    const btn = document.getElementById('submit-btn');
-    btn.disabled = true;
-    btn.textContent = '⟳ Calcul en cours…';
-
-    const birthDate  = document.getElementById('birth-date').value;
-    const birthTime  = document.getElementById('birth-time').value;
-    const birthPlace = document.getElementById('birth-place').value;
-    const chartType  = document.getElementById('chart-type').value;
-    const houseSystem = document.getElementById('house-system').value;
-
-    // Affiche la zone résultats avec un loader
-    const resultsEl = document.getElementById('results');
-    const interpEl  = document.getElementById('interpretation-text');
-    resultsEl.style.display = 'block';
-    interpEl.innerHTML = `<div class="loading-state"><div class="spinner"></div>Calcul des positions planétaires et génération de l'interprétation…</div>`;
-    resultsEl.scrollIntoView({ behavior: 'smooth' });
-
-    // Résumé visible
-    document.getElementById('result-title').textContent = 'Votre Thème Natal';
-    document.getElementById('result-subtitle').textContent = `${birthDate} · ${birthTime} · ${birthPlace}`;
-    buildChartSummary(birthDate, birthTime, birthPlace);
-
-    // Appel API Gemini via proxy sécurisé
-    try {
-      const prompt = buildPrompt(birthDate, birthTime, birthPlace, chartType, houseSystem);
-      const res = await fetch('/api/claude', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prompt })
-      });
-      const data = await res.json();
-      const text = data?.text || 'Erreur lors de la génération.';
-      interpEl.textContent = text;
-
-      // Sauvegarde si connecté
-      const fb = window._firebase;
-      if (fb && window._currentUser) {
-        const uid = window._currentUser.uid;
-        const docId = uid + '_' + Date.now();
-        // Anonymisation : on ne stocke PAS le nom, uniquement données astronomiques
-        await fb.setDoc(fb.doc(fb.db, 'charts', docId), {
-          uid,
-          birthDate,
-          birthTime,
-          birthPlace,
-          chartType,
-          houseSystem,
-          interpretation: text,
-          createdAt: new Date().toISOString()
-        });
-        await loadUserCharts(uid);
-      }
-    } catch (err) {
-      interpEl.textContent = 'Une erreur est survenue. Vérifiez votre connexion et réessayez.';
-      console.error(err);
-    }
-
-    btn.disabled = false;
-    btn.textContent = '✦ Calculer mon thème natal';
-  }
-
-  // ─── PROMPT BUILDER ──────────────────────────────────────
-  function buildPrompt(date, time, place, type, houses) {
-    const today = new Date();
-    const todayStr = today.toISOString().split('T')[0];
-    const tomorrow = new Date(today);
-    tomorrow.setDate(tomorrow.getDate() + 1);
-    const tomorrowStr = tomorrow.toISOString().split('T')[0];
-    return `Tu es un astrologue professionnel expert. Génère une analyse astrologique complète, structurée et détaillée en français. Tu disposes de 8000 tokens — utilise-les pleinement pour donner une lecture riche et profonde.
-
-DONNÉES DE NAISSANCE :
-- Date : ${date}
-- Heure : ${time}
-- Lieu : ${place}
-- Système de maisons : ${houses}
-- Type d'analyse : ${type}
-- Date du jour : ${todayStr}
-- Date de demain : ${tomorrowStr}
-
-STRUCTURE OBLIGATOIRE — respecte exactement ces sections :
-
-## 1. PORTRAIT ASTROLOGIQUE (caractère et personnalité)
-- Signe solaire, signe lunaire, ascendant probable — explique chaque placement en détail
-- Planètes personnelles (Mercure, Vénus, Mars) et leur expression dans le thème
-- Dominantes planétaires et élémentaires (Feu/Terre/Air/Eau)
-- Points forts et zones de tension dans le caractère
-- Maisons significatives et leur influence sur la vie
-
-## 2. ASPECTS MAJEURS DU THÈME NATAL
-- Identifie et explique les aspects principaux (conjonctions, trigones, carrés, oppositions, sextiles)
-- Nœuds lunaires : mission de vie (Nœud Nord) et karma passé (Nœud Sud)
-- Chiron : la blessure originelle et le chemin de guérison
-- Synthèse des dynamiques internes majeures
-
-## 3. TRANSITS ACTUELS (influences du moment — ${todayStr})
-- Position actuelle des planètes lentes (Jupiter, Saturne, Uranus, Neptune, Pluton)
-- Aspects de ces transits sur le thème natal
-- Thèmes et opportunités activés en ce moment dans la vie
-
-## 4. PRÉVISION POUR DEMAIN (${tomorrowStr})
-- Position de la Lune et son influence sur l'humeur et les événements
-- Aspects lunaires de la journée et leur timing approximatif
-- Domaines de vie favorisés (travail, relations, créativité, santé)
-- Points de vigilance et moments clés de la journée
-- Conseil pratique pour tirer le meilleur de cette journée
-
-## 5. PROGRESSIONS SECONDAIRES
-- Évolution intérieure en cours : comment le thème natal mûrit
-- Progressions significatives actives en ce moment
-
-## 6. SYNTHÈSE ET CONSEIL
-- Message central de ce thème natal
-- Opportunités à saisir dans les prochaines semaines
-- Conseil personnel pour avancer sur le chemin de vie
-
-RÈGLES :
-- Sois précis, nuancé, évite les généralités creuses
-- Utilise un vocabulaire astrologique professionnel mais accessible
-- Chaque section doit être substantielle (minimum 150 mots)
-- NE MENTIONNE JAMAIS de nom ou prénom`;
-  }
-
-  // ─── CHART SUMMARY ──────────────────────────────────────
-  function buildChartSummary(date, time, place) {
-    const d = new Date(date + 'T12:00:00');
-    const signs = ['Capricorne','Verseau','Poissons','Bélier','Taureau','Gémeaux','Cancer','Lion','Vierge','Balance','Scorpion','Sagittaire'];
-    const month = d.getMonth(); // approximation signe solaire
-    const signIndex = Math.floor(((month * 30 + d.getDate()) % 365) / 30.4) % 12;
-    const sign = signs[signIndex];
-    const summary = document.getElementById('chart-summary');
-    summary.innerHTML = `
-      <div class="chart-item">
-        <div class="label">Signe solaire</div>
-        <div class="value">${sign}</div>
-      </div>
-      <div class="chart-item">
-        <div class="label">Lieu de naissance</div>
-        <div class="value" style="font-size:1rem">${place}</div>
-      </div>
-      <div class="chart-item">
-        <div class="label">Heure locale</div>
-        <div class="value">${time}</div>
-      </div>
-    `;
-  }
+function resetForm() {
+  document.getElementById('results').style.display = 'none';
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
 </script>
 </body>
 </html>
