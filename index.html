@@ -486,43 +486,6 @@
   </div>
 </div>
 
-<!-- MÉTHODES -->
-<div class="section" id="methodes">
-  <div class="section-title">Nos méthodes astrologiques</div>
-  <div class="methods-grid">
-    <div class="method-card">
-      <span class="method-icon">☉</span>
-      <h3>Thème Natal</h3>
-      <p>Carte du ciel au moment exact de votre naissance. Position précise du Soleil, de la Lune et des 8 planètes dans les 12 signes et 12 maisons. Système de maisons Placidus — le plus utilisé par les astrologues professionnels.</p>
-    </div>
-    <div class="method-card">
-      <span class="method-icon">♄</span>
-      <h3>Transits Planétaires</h3>
-      <p>Comparaison entre la position actuelle des planètes et votre thème natal. Les transits révèlent les cycles d'influence en cours — Jupiter en trigone, Saturne en opposition, les éclipses sur vos axes sensibles.</p>
-    </div>
-    <div class="method-card">
-      <span class="method-icon">⊕</span>
-      <h3>Maisons Astrologiques</h3>
-      <p>Division du ciel en 12 secteurs de vie : identité, argent, communication, foyer, créativité, santé, relations, transformation, spiritualité, carrière, amis, inconscient. Chaque planète dans une maison colore son expression.</p>
-    </div>
-    <div class="method-card">
-      <span class="method-icon">△</span>
-      <h3>Aspects Planétaires</h3>
-      <p>Angles significatifs entre planètes : conjonction (0°), sextile (60°), carré (90°), trigone (120°), opposition (180°). Chaque aspect crée une dynamique spécifique d'harmonie, de tension ou de transformation.</p>
-    </div>
-    <div class="method-card">
-      <span class="method-icon">↻</span>
-      <h3>Progressions Secondaires</h3>
-      <p>Méthode évolutive : 1 jour après la naissance = 1 année de vie. Les progressions montrent l'évolution intérieure de la personnalité sur le long terme — comment votre thème natal "grandit" avec vous.</p>
-    </div>
-    <div class="method-card">
-      <span class="method-icon">☊</span>
-      <h3>Nœuds Lunaires & Astéroïdes</h3>
-      <p>Nœud Nord et Sud (karma et mission de vie), Chiron (blessure et guérison), Lilith (ombre et puissance), Vertex (rencontres de destin). Ces points sensibles enrichissent considérablement l'analyse.</p>
-    </div>
-  </div>
-</div>
-
 <!-- FORMULAIRE -->
 <div class="form-section" id="theme-natal">
   <div class="form-container">
@@ -575,6 +538,44 @@
         ✦ Calculer mon thème natal
       </button>
     </form>
+  </div>
+  <a href="#theme-natal" style="display:inline-block;margin-top:1rem;padding:1rem 2.5rem;border:1px solid var(--gold);color:var(--gold);font-family:Josefin Sans,sans-serif;font-size:0.8rem;letter-spacing:0.3em;text-transform:uppercase;text-decoration:none;transition:all 0.3s;" onmouseover="this.style.background='var(--gold)';this.style.color='var(--bg)'" onmouseout="this.style.background='transparent';this.style.color='var(--gold)'">✦ Calculer mon thème natal</a>
+</div>
+
+<!-- MÉTHODES -->
+<div class="section" id="methodes">
+  <div class="section-title">Nos méthodes astrologiques</div>
+  <div class="methods-grid">
+    <div class="method-card">
+      <span class="method-icon">☉</span>
+      <h3>Thème Natal</h3>
+      <p>Carte du ciel au moment exact de votre naissance. Position précise du Soleil, de la Lune et des 8 planètes dans les 12 signes et 12 maisons. Système de maisons Placidus — le plus utilisé par les astrologues professionnels.</p>
+    </div>
+    <div class="method-card">
+      <span class="method-icon">♄</span>
+      <h3>Transits Planétaires</h3>
+      <p>Comparaison entre la position actuelle des planètes et votre thème natal. Les transits révèlent les cycles d'influence en cours — Jupiter en trigone, Saturne en opposition, les éclipses sur vos axes sensibles.</p>
+    </div>
+    <div class="method-card">
+      <span class="method-icon">⊕</span>
+      <h3>Maisons Astrologiques</h3>
+      <p>Division du ciel en 12 secteurs de vie : identité, argent, communication, foyer, créativité, santé, relations, transformation, spiritualité, carrière, amis, inconscient. Chaque planète dans une maison colore son expression.</p>
+    </div>
+    <div class="method-card">
+      <span class="method-icon">△</span>
+      <h3>Aspects Planétaires</h3>
+      <p>Angles significatifs entre planètes : conjonction (0°), sextile (60°), carré (90°), trigone (120°), opposition (180°). Chaque aspect crée une dynamique spécifique d'harmonie, de tension ou de transformation.</p>
+    </div>
+    <div class="method-card">
+      <span class="method-icon">↻</span>
+      <h3>Progressions Secondaires</h3>
+      <p>Méthode évolutive : 1 jour après la naissance = 1 année de vie. Les progressions montrent l'évolution intérieure de la personnalité sur le long terme — comment votre thème natal "grandit" avec vous.</p>
+    </div>
+    <div class="method-card">
+      <span class="method-icon">☊</span>
+      <h3>Nœuds Lunaires & Astéroïdes</h3>
+      <p>Nœud Nord et Sud (karma et mission de vie), Chiron (blessure et guérison), Lilith (ombre et puissance), Vertex (rencontres de destin). Ces points sensibles enrichissent considérablement l'analyse.</p>
+    </div>
   </div>
 </div>
 
@@ -749,28 +750,63 @@
 
   // ─── PROMPT BUILDER ──────────────────────────────────────
   function buildPrompt(date, time, place, type, houses) {
-    const today = new Date().toISOString().split('T')[0];
-    return `Tu es un astrologue professionnel expert. Génère une interprétation astrologique détaillée et personnalisée en français.
+    const today = new Date();
+    const todayStr = today.toISOString().split('T')[0];
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    const tomorrowStr = tomorrow.toISOString().split('T')[0];
+    return `Tu es un astrologue professionnel expert. Génère une analyse astrologique complète, structurée et détaillée en français. Tu disposes de 8000 tokens — utilise-les pleinement pour donner une lecture riche et profonde.
 
 DONNÉES DE NAISSANCE :
 - Date : ${date}
 - Heure : ${time}
 - Lieu : ${place}
 - Système de maisons : ${houses}
-- Type d'analyse demandée : ${type}
-- Date du jour pour transits : ${today}
+- Type d'analyse : ${type}
+- Date du jour : ${todayStr}
+- Date de demain : ${tomorrowStr}
 
-INSTRUCTIONS :
-1. Calcule mentalement les positions planétaires approximatives pour cette date/heure/lieu.
-2. Identifie le signe solaire, le signe lunaire et l'ascendant probable.
-3. Décris les aspects majeurs entre planètes (conjonctions, carrés, trigones, oppositions).
-4. Pour les maisons : positionne les planètes dans les maisons correspondantes selon ${houses}.
-5. Si type inclut "transits" : commente les influences actuelles (${today}).
-6. Si type inclut "progressions" : commente l'évolution intérieure en cours.
-7. Sois précis, nuancé, et évite les généralités creuses.
-8. Structure ta réponse en sections claires : Soleil/Lune/Ascendant, Planètes personnelles, Aspects majeurs, Maisons significatives, Synthèse.
-9. Longueur : 600-800 mots, ton professionnel mais accessible.
-10. NE MENTIONNE JAMAIS de nom ou prénom dans ta réponse.`;
+STRUCTURE OBLIGATOIRE — respecte exactement ces sections :
+
+## 1. PORTRAIT ASTROLOGIQUE (caractère et personnalité)
+- Signe solaire, signe lunaire, ascendant probable — explique chaque placement en détail
+- Planètes personnelles (Mercure, Vénus, Mars) et leur expression dans le thème
+- Dominantes planétaires et élémentaires (Feu/Terre/Air/Eau)
+- Points forts et zones de tension dans le caractère
+- Maisons significatives et leur influence sur la vie
+
+## 2. ASPECTS MAJEURS DU THÈME NATAL
+- Identifie et explique les aspects principaux (conjonctions, trigones, carrés, oppositions, sextiles)
+- Nœuds lunaires : mission de vie (Nœud Nord) et karma passé (Nœud Sud)
+- Chiron : la blessure originelle et le chemin de guérison
+- Synthèse des dynamiques internes majeures
+
+## 3. TRANSITS ACTUELS (influences du moment — ${todayStr})
+- Position actuelle des planètes lentes (Jupiter, Saturne, Uranus, Neptune, Pluton)
+- Aspects de ces transits sur le thème natal
+- Thèmes et opportunités activés en ce moment dans la vie
+
+## 4. PRÉVISION POUR DEMAIN (${tomorrowStr})
+- Position de la Lune et son influence sur l'humeur et les événements
+- Aspects lunaires de la journée et leur timing approximatif
+- Domaines de vie favorisés (travail, relations, créativité, santé)
+- Points de vigilance et moments clés de la journée
+- Conseil pratique pour tirer le meilleur de cette journée
+
+## 5. PROGRESSIONS SECONDAIRES
+- Évolution intérieure en cours : comment le thème natal mûrit
+- Progressions significatives actives en ce moment
+
+## 6. SYNTHÈSE ET CONSEIL
+- Message central de ce thème natal
+- Opportunités à saisir dans les prochaines semaines
+- Conseil personnel pour avancer sur le chemin de vie
+
+RÈGLES :
+- Sois précis, nuancé, évite les généralités creuses
+- Utilise un vocabulaire astrologique professionnel mais accessible
+- Chaque section doit être substantielle (minimum 150 mots)
+- NE MENTIONNE JAMAIS de nom ou prénom`;
   }
 
   // ─── CHART SUMMARY ──────────────────────────────────────
