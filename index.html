@@ -634,7 +634,7 @@
 
   async function handleAuth() {
     const fb = window._firebase;
-    if (!fb) { alert('Firebase non initialisé'); return; }
+    if (!fb) return;
     if (window._currentUser) {
       await fb.signOut(fb.auth);
       document.getElementById('saved-charts').style.display = 'none';
@@ -643,7 +643,6 @@
         await fb.signInWithPopup(fb.auth, fb.googleProvider);
       } catch (e) {
         console.error('Auth error:', e);
-        alert('Erreur auth: ' + e.code + ' - ' + e.message);
       }
     }
   }
