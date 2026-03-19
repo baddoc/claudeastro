@@ -1,16 +1,14 @@
-import type { Context, Config } from "@netlify/functions";
-
-export default async (req: Request, context: Context) => {
+export default async (req, context) => {
   if (req.method !== "POST") {
     return new Response("Method not allowed", { status: 405 });
   }
 
   const apiKey = Netlify.env.get("GEMINI_API_KEY");
   if (!apiKey) {
-    return new Response("API key not configured", { status: 500 });
+    return new Response(JSON.stringify({ text: "Clé API non configurée." }), { status: 200 });
   }
 
-  let body: { prompt?: string };
+  let body;
   try {
     body = await req.json();
   } catch {
@@ -48,6 +46,6 @@ export default async (req: Request, context: Context) => {
   });
 };
 
-export const config: Config = {
+export const config = {
   path: "/api/claude",
 };
